@@ -10,7 +10,6 @@ struct RoomDetailView: View {
     @State private var showingDeleteError = false
     @State private var deleteErrorMessage = ""
     
-    // Define room-specific item types (initial test data)
     @State private var roomItemTypes: [String: [String]] = [
         "Entry": ["Doors/walls/ceiling", "Fan/Light Fittings", "Floor/floor coverings", "Cupboards/drawers"],
         "Bedroom": ["Doors/walls/ceiling", "Windows/screens", "Blinds/curtains", "Fan/Light Fittings", "Floor/floor coverings", "Wardrobe/drawers/shelves", "Power points", "Air conditioner", "Smoke Alarms"],
@@ -18,7 +17,6 @@ struct RoomDetailView: View {
         "Lounge": ["Doors/walls/ceiling", "Windows/screens", "Blinds/curtains", "Fan/Light Fittings", "Floor/floor coverings", "Power points", "Air conditioner", "Smoke Alarms"]
     ]
     
-    // State for the current room's item types
     @State private var itemTypesForCurrentRoom: [String]
     
     init(room: Binding<Room>) {
@@ -34,6 +32,11 @@ struct RoomDetailView: View {
         self._itemTypesForCurrentRoom = State(initialValue: initialItemTypes[initialRoomType] ?? ["Doors/walls/ceiling", "Windows/screens", "Floor/floor coverings"])
     }
     
+    // Function to calculate photo count for an item type
+    private func photoCount(for itemType: String) -> Int {
+        room.items.first(where: { $0.name == itemType })?.photos.count ?? 0
+    }
+    
     var body: some View {
         VStack {
             List {
@@ -43,10 +46,9 @@ struct RoomDetailView: View {
                             HStack {
                                 Text(itemType)
                                 Spacer()
-                                // Show the number of photos for this item type
-                                let photoCount = room.items.first(where: { $0.name == itemType })?.photos.count ?? 0
-                                Text("Photos: \(photoCount)")
-                                    .foregroundColor(photoCount > 0 ? .gray : .black) // Gray out if completed
+                                let count = photoCount(for: itemType) // Use function
+                                Text("Photos: \(count)")
+                                    .foregroundColor(count > 0 ? .gray : .black)
                                     .font(.caption)
                             }
                         }
@@ -95,7 +97,6 @@ struct RoomDetailView: View {
                     
                     Button("Add") {
                         if !newItemType.isEmpty {
-                            // Update roomItemTypes
                             var updatedRoomItemTypes = roomItemTypes
                             if var existingItems = updatedRoomItemTypes[room.type] {
                                 existingItems.append(newItemType)
@@ -104,14 +105,7 @@ struct RoomDetailView: View {
                                 updatedRoomItemTypes[room.type] = [newItemType]
                             }
                             roomItemTypes = updatedRoomItemTypes
-                            
-                            // Update itemTypesForCurrentRoom
                             itemTypesForCurrentRoom.append(newItemType)
-                            
-                            print("After adding '\(newItemType)':")
-                            print("roomItemTypes[\(room.type)]: \(roomItemTypes[room.type] ?? [])")
-                            print("itemTypesForCurrentRoom: \(itemTypesForCurrentRoom)")
-                            
                             newItemType = ""
                             showingAddItemType = false
                         }
@@ -144,7 +138,6 @@ struct RoomDetailView: View {
                     
                     Button("Save") {
                         if let oldItemType = itemTypeToEdit, !editedItemTypeName.isEmpty {
-                            // Update roomItemTypes
                             var updatedRoomItemTypes = roomItemTypes
                             if var existingItems = updatedRoomItemTypes[room.type] {
                                 if let index = existingItems.firstIndex(of: oldItemType) {
@@ -153,21 +146,12 @@ struct RoomDetailView: View {
                                 }
                             }
                             roomItemTypes = updatedRoomItemTypes
-                            
-                            // Update itemTypesForCurrentRoom
                             if let index = itemTypesForCurrentRoom.firstIndex(of: oldItemType) {
                                 itemTypesForCurrentRoom[index] = editedItemTypeName
                             }
-                            
-                            // Update any existing Item in room.items
                             if let itemIndex = room.items.firstIndex(where: { $0.name == oldItemType }) {
                                 room.items[itemIndex].name = editedItemTypeName
                             }
-                            
-                            print("After editing '\(oldItemType)' to '\(editedItemTypeName)':")
-                            print("roomItemTypes[\(room.type)]: \(roomItemTypes[room.type] ?? [])")
-                            print("itemTypesForCurrentRoom: \(itemTypesForCurrentRoom)")
-                            
                             editedItemTypeName = ""
                             itemTypeToEdit = nil
                             showingEditItemType = false
@@ -191,32 +175,23 @@ struct RoomDetailView: View {
         }
         .onChange(of: room.type) { newType in
             itemTypesForCurrentRoom = roomItemTypes[newType] ?? ["Doors/walls/ceiling", "Windows/screens", "Floor/floor coverings"]
-            print("Room type changed to \(newType), itemTypesForCurrentRoom: \(itemTypesForCurrentRoom)")
         }
     }
     
     private func deleteItemType(_ itemType: String) {
-        // Check if the item type is in use
         if room.items.contains(where: { $0.name == itemType }) {
             deleteErrorMessage = "Cannot delete '\(itemType)' because it is in use. Please remove the item from the inspection first."
             showingDeleteError = true
             return
         }
         
-        // Update roomItemTypes
         var updatedRoomItemTypes = roomItemTypes
         if var existingItems = updatedRoomItemTypes[room.type] {
             existingItems.removeAll { $0 == itemType }
             updatedRoomItemTypes[room.type] = existingItems
         }
         roomItemTypes = updatedRoomItemTypes
-        
-        // Update itemTypesForCurrentRoom
         itemTypesForCurrentRoom.removeAll { $0 == itemType }
-        
-        print("After deleting '\(itemType)':")
-        print("roomItemTypes[\(room.type)]: \(roomItemTypes[room.type] ?? [])")
-        print("itemTypesForCurrentRoom: \(itemTypesForCurrentRoom)")
     }
     
     private func itemBinding(for itemType: String) -> Binding<Item> {
@@ -232,10 +207,10 @@ struct RoomDetailView: View {
                     } else {
                         room.items.append(updatedItem)
                     }
-                    newItem = updatedItem // Update local copy
+                    newItem = updatedItem
                 }
             )
-            room.items.append(newItem) // Append immediately
+            room.items.append(newItem)
             return binding
         }
     }

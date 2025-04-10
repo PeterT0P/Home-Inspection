@@ -19,6 +19,7 @@ struct Item: Identifiable, Codable, Hashable, Equatable {
     enum CodingKeys: String, CodingKey {
         case name, photos, comments, condition
     }
+
     
     init(name: String, photos: [PhotoDetail] = [], comments: String = "", condition: [String: Bool] = ["Clean": true, "Undamaged": true, "Working": true]) {
         self.name = name
