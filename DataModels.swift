@@ -1,31 +1,38 @@
 import Foundation
 
-struct PhotoDetail: Identifiable, Codable, Hashable {
-    let id = UUID()
-    var path: String
+struct PhotoDetail: Identifiable, Codable {
+    let id: UUID
+    var image: Data
+    var dateTaken: Date
     
-    enum CodingKeys: String, CodingKey {
-        case path
+    init(id: UUID = UUID(), image: Data, dateTaken: Date) {
+        self.id = id
+        self.image = image
+        self.dateTaken = dateTaken
     }
 }
 
 struct Item: Identifiable, Codable, Hashable, Equatable {
-    let id = UUID()
+    var id: UUID
     var name: String
-    var photos: [PhotoDetail]
-    var comments: String
-    var condition: [String: Bool]
+    var comments: String = ""
+    var condition: [String: Bool] = ["Good": true, "Fair": false, "Poor": false]
+    var photos: [PhotoDetail] = []
     
-    enum CodingKeys: String, CodingKey {
-        case name, photos, comments, condition
-    }
-
-    
-    init(name: String, photos: [PhotoDetail] = [], comments: String = "", condition: [String: Bool] = ["Clean": true, "Undamaged": true, "Working": true]) {
+    init(id: UUID = UUID(), name: String, photos: [PhotoDetail] = [], comments: String = "", condition: [String: Bool] = ["Clean": true, "Undamaged": true, "Working": true]) {
+        self.id = id
         self.name = name
         self.photos = photos
         self.comments = comments
         self.condition = condition
+    }
+    
+    static func ==(lhs: Item, rhs: Item) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
 
